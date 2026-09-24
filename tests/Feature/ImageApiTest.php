@@ -70,3 +70,33 @@ test('user cannot upload more than daily limit of images', function () {
     $response = $this->postJson('/api/images', ['image' => $file]);
 
 });
+
+test('authenticated user can retrieve paginated list of their images', function () {
+    $user = User::factory()->create();
+
+    // create 20 bulk images
+    Image::factory()->count(20)->create([
+        'user_id' => $user->id,
+    ]);
+
+    $response = $this->actingAs($user)
+        ->getJson('/api/images?per_page=5&page=2');
+
+    $response->assertStatus(200)
+        ->assertJsonStructure([
+            'data',
+            'links' => ['first', 'last', 'prev', 'next'],
+            'meta' => [
+                'current_page',
+                'from',
+                'last_page',
+                'per_page',
+                'to',
+                'total',
+            ],
+        ])
+        ->assertJsonPath('meta.current_page', 2)
+        ->assertJsonPath('meta.per_page', 5)
+        ->assertJsonPath('meta.total', 20)
+        ->assertJsonCount(5, 'data');
+});
