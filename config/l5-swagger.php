@@ -5,7 +5,7 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'L5 Swagger UI',
+                'title' => 'Image Service API',
             ],
 
             'routes' => [
@@ -65,7 +65,7 @@ return [
              * Middleware allows to prevent unexpected access to API documentation
              */
             'middleware' => [
-                'api' => [],
+//                'api' => [],
                 'asset' => [],
                 'docs' => [],
                 'oauth2_callback' => [],
@@ -92,6 +92,8 @@ return [
              * Edit to set the api's base path
              */
             'base' => env('L5_SWAGGER_BASE_PATH', null),
+
+            'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
 
             /*
              * Absolute path to directories that should be excluded from scanning

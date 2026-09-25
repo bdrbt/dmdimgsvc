@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class ImageService
 {
@@ -18,6 +19,46 @@ class ImageService
     public function calculateHash(string $filePath): string
     {
         return hash_file('sha256', $filePath);
+    }
+
+    /**
+     * Check real image content
+     */
+    public function validateImageContent(UploadedFile $file): void
+    {
+        $filePath = $file->getRealPath();
+
+        // 1. check signatures
+        $imageInfo = @getimagesize($filePath);
+
+        if ($imageInfo === false) {
+            throw ValidationException::withMessages([
+                'image' => ['Uploaded file is not an image.'],
+            ]);
+        }
+
+        $imageType = $imageInfo[2]; // IMAGETYPE_JPEG или IMAGETYPE_PNG
+
+        if (!in_array($imageType, [IMAGETYPE_JPEG, IMAGETYPE_PNG], true)) {
+            throw ValidationException::withMessages([
+                'image' => ['Only PNG and JPEG images allowed.'],
+            ]);
+        }
+
+        // 2. Deep check content of file
+        if ($imageType === IMAGETYPE_JPEG) {
+            $gdImage = @imagecreatefromjpeg($filePath);
+        } elseif ($imageType === IMAGETYPE_PNG) {
+            $gdImage = @imagecreatefrompng($filePath);
+        } else {
+            $gdImage = false;
+        }
+
+        if (!$gdImage) {
+            throw ValidationException::withMessages([
+                'image' => ['File corrupted'],
+            ]);
+        }
     }
 
     /**

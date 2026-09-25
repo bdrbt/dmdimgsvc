@@ -23,13 +23,14 @@ class StoreImageRequest extends FormRequest
      */
     public function rules(): array
     {
+        $maxSize = config('images.max_size_kb');
         return [
             'image' => [
                 'required',
                 'file',
                 'image',
                 'mimes:jpeg,jpg,png,webp',
-                'max:10240',
+                "max:{$maxSize}",
             ],
         ];
     }
@@ -40,10 +41,11 @@ class StoreImageRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
-            if ($this->user() && $this->user()->hasReachedDailyLimit(100000)) {
+            $daily_limit = config('images.daily_limit');
+            if ($this->user() && $this->user()->hasReachedDailyLimit($daily_limit)) {
                 $validator->errors()->add(
                     'image',
-                    'Daily upload limit of 100,000 files reached.'
+                    'Daily upload limit of {$daily_limit} files reached.'
                 );
             }
         });

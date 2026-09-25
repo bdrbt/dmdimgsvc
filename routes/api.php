@@ -16,8 +16,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::get('/images', [ImageController::class, 'index']);
-    Route::post('/images', [ImageController::class, 'store']);
-    Route::delete('/images/{image}', [ImageController::class, 'destroy']);
+    Route::apiResource('images', ImageController::class)->only([
+        'index', 'show', 'store', 'destroy' // <-- Убедитесь, что 'destroy' указан
+    ]);
 });
 

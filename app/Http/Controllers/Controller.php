@@ -12,14 +12,10 @@ use React\Socket\Server;
             "url" => "https://via.placeholder.com/190x90.png?text=L5-Swagger"
         ]
     ],
-    title: "L5 OpenApi",
-    description: "L5 Swagger OpenApi description",
+    title: "Image service api",
+    description: "Service for image uploads",
     contact: new OA\Contact(
-        email: "darius@matulionis.lt"
-    ),
-    license: new OA\License(
-        name: "Apache 2.0",
-        url: "https://www.apache.org/licenses/LICENSE-2.0.html"
+        email: "bdrbt.com@gmail.com"
     ),
 )]
 #[OA\Server(

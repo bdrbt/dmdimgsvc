@@ -173,10 +173,14 @@ class ImageController
     )
     )]
     #[OA\Response(response: 401, description: "Unauthenticated")]
-    #[OA\Response(response: 422, description: "Daily limit reached or invalid image")]
+    #[OA\Response(response: 422, description: "Maximum file size limit exceeded")]
+
     public function store(StoreImageRequest $request): JsonResponse
     {
         $file = $request->file('image');
+
+        $this->imageService->validateImageContent($file);
+
         $image = $this->imageService->storeImage($file, $request->user());
 
         $image->load('storedFile');
@@ -188,8 +192,136 @@ class ImageController
     }
 
     /**
+     * Display the specified image belonging to the authenticated user
+     */
+    #[OA\Get(
+        path: "/api/images/{image}",
+        summary: "Get single image details by ID",
+        security: [["bearerAuth" => []]],
+        tags: ["Images"],
+        parameters: [
+            new OA\Parameter(
+                name: "image",
+                in: "path",
+                description: "Image ID",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ]
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Image details retrieved successfully",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(
+                    property: "data",
+                    type: "object",
+                    properties: [
+                        new OA\Property(property: "id", type: "integer", example: 1),
+                        new OA\Property(property: "original_name", type: "string", example: "photo.jpg"),
+                        new OA\Property(property: "file_hash", type: "string", example: "e3b0c44298fc1c149..."),
+                        new OA\Property(property: "mime_type", type: "string", example: "image/jpeg"),
+                        new OA\Property(property: "size", type: "integer", example: 102400),
+                        new OA\Property(property: "url", type: "string", example: "http://localhost:9000/images/e3b0c44298fc1c149...jpg"),
+                        new OA\Property(property: "created_at", type: "string", format: "date-time")
+                    ]
+                )
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthenticated",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Unauthenticated.")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 403,
+        description: "Forbidden - user does not own this image",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "This action is unauthorized.")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Image not found",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Resource not found.")
+            ]
+        )
+    )]
+    public function show(Image $image): JsonResponse
+    {
+        $this->authorize('view', $image);
+
+        $image->load('storedFile');
+
+        return response()->json([
+            'data' => new ImageResource($image),
+        ], 200);
+    }
+
+    /**
      * remove users image
      */
+    #[OA\Delete(
+        path: "/api/images/{image}",
+        summary: "Delete user's image by ID",
+        security: [["bearerAuth" => []]],
+        tags: ["Images"],
+        parameters: [
+            new OA\Parameter(
+                name: "image",
+                in: "path",
+                description: "Image record ID",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ]
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Image deleted successfully",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Image deleted successfully")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthenticated",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Unauthenticated.")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 403,
+        description: "Forbidden - user does not own this image",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "This action is unauthorized.")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 404,
+        description: "Image not found",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Resource not found.")
+            ]
+        )
+    )]
     public function destroy(Image $image): JsonResponse
     {
         $this->authorize('delete', $image);

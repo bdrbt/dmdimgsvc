@@ -11,14 +11,40 @@ beforeEach(function () {
     Storage::fake('local');
 });
 
+test('fails validation when uploading fake png file containing text', function () {
+    $user = User::factory()->create();
+
+    $fakeFile = \Illuminate\Http\Testing\File::create('fake.png', 10);
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/images', [
+            'image' => $fakeFile,
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['image']);
+});
+
+test('successfully uploads valid png image', function () {
+    $user = User::factory()->create();
+
+    // Генерируем реальное PNG-изображение
+    $validImage = \Illuminate\Http\Testing\File::image('real.png', 100, 100);
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/images', [
+            'image' => $validImage,
+        ]);
+
+    $response->assertStatus(201);
+});
+
 test('user can upload an image via API', function () {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
-    $file = UploadedFile::fake()->image('avatar.jpg');
-
     $response = $this->postJson('/api/images', [
-        'image' => $file,
+        'image' => createValidImage('avatar.jpg'),
     ]);
 
     $response->assertStatus(201)
@@ -31,6 +57,28 @@ test('user can upload an image via API', function () {
         'user_id' => $user->id,
         'original_name' => 'avatar.jpg',
     ]);
+});
+
+test('user can view their own image details', function () {
+    $user = User::factory()->create();
+    $image = Image::factory()->create(['user_id' => $user->id]);
+
+    $response = $this->actingAs($user)
+        ->getJson("/api/images/{$image->id}");
+
+    $response->assertStatus(200)
+        ->assertJsonPath('data.id', $image->id);
+});
+
+test('user cannot view another user image', function () {
+    $owner = User::factory()->create();
+    $stranger = User::factory()->create();
+    $image = Image::factory()->create(['user_id' => $owner->id]);
+
+    $response = $this->actingAs($stranger)
+        ->getJson("/api/images/{$image->id}");
+
+    $response->assertStatus(403);
 });
 
 test('user cannot delete someone elses image', function () {

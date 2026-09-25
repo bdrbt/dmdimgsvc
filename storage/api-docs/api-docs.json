@@ -252,7 +252,7 @@
                         "description": "Unauthenticated"
                     },
                     "422": {
-                        "description": "Daily limit reached or invalid image"
+                        "description": "Maximum file size limit exceeded"
                     }
                 },
                 "security": [

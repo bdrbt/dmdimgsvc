@@ -113,6 +113,30 @@ class AuthController extends Controller
     /**
      * Logut
      */
+    #[OA\Post(
+        path: "/api/logout",
+        summary: "Logout current user and revoke access token",
+        security: [["bearerAuth" => []]],
+        tags: ["Authentication"]
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Tokens revoked successfully",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Tokens revoked successfully")
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthenticated",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "message", type: "string", example: "Unauthenticated.")
+            ]
+        )
+    )]
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
